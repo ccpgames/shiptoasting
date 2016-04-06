@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>ShipToasting!</title>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" type="text/css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" type="text/css">
+<script type="text/javascript">
+ function complete() {
+  $("#cuboid form").removeClass("loading").addClass("complete");
+ }
+ $("#content").focus(function() {
+  $("#cuboid form").addClass("ready");
+ })
+ $("#content").blur(function() {
+  if($(this).val() == "") {
+   $("#cuboid form").removeClass("ready");
+  }
+ })
+ $("#content").keyup(function() {
+  $(".submit-icon").toggleClass("active", $(this).val().length > 0);
+ })
+ $("#cuboid form").submit(function() {
+  $(this).removeClass("ready").addClass("loading");
+  setTimeout(complete, 60000);
+ })
+ $(".reset-icon").click(function() {
+  $("#cuboid form").removeClass("complete");
+ })
+ var shiptoasts = new EventSource("/shiptoasts");
+ shiptoasts.onmessage = function(event) {
+  var updated_html = event.data + document.getElementById("shiptoasts").innerHTML;
+  document.getElementById("shiptoasts").innerHTML = updated_html;
+ }
+</script>
+<style>
+* {
+  margin: 0 auto;
+  padding: 0;
+}
+body {
+  background: hsl(10, 10%, 20%);
+  padding-top: 75px;
+  font: normal 18px 'Source Sans Pro', sans-serif;
+  color: white;
+  text-align: center;
+}
+h1 {
+  font-weight: normal;
+  font-size: 36px;
+  padding: 1em 0 2.5em;
+}
+.bg-toast i {
+  transform: scale(10);
+  opacity: 0.1;
+  top: 100px;
+  position: absolute;
+}
+#cuboid {
+  width: 600px;
+  margin: 0 auto;
+  perspective: 1000px;
+  padding-bottom: 2em;
+}
+#cuboid form {
+  transform: translateZ(-20px);
+  transform-style: preserve-3d;
+  height: 40px;
+  transition: all 0.35s;
+}
+.cuboid-text {
+  line-height: 40px;
+  height: 40px;
+  background: hsl(0, 0%, 30%);
+}
+.loader {
+  background: hsl(0, 0%, 40%);
+  animation: phase 1s infinite;
+}
+@keyframes phase {
+  50% {
+    background: hsl(0, 0%, 60%);
+  }
+}
+#content {
+  background: white;
+  outline: none;
+  border: 0 none;
+  font: inherit;
+  text-align: left;
+  color: hsl(0, 0%, 30%);
+  display: block;
+  width: 100%;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+#submit {
+  display: none;
+}
+.submit-icon, .reset-icon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: rgba(0, 0, 0, 0.25);
+  line-height: 40px;
+  padding: 0 10px;
+  transition: all 0.5s;
+  cursor: pointer;
+}
+.submit-icon.active {
+  color: hsl(0, 0%, 30%);
+}
+.reset-icon {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 14px;
+}
+#cuboid div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+#cuboid div:nth-child(1) {transform: rotateX(0deg) translateZ(20px);}
+#cuboid div:nth-child(2) {transform: rotateX(-90deg) translateZ(20px);}
+#cuboid div:nth-child(3) {transform: rotateX(-180deg) translateZ(20px);}
+#cuboid div:nth-child(4) {transform: rotateX(-270deg) translateZ(20px);}
+#cuboid form:hover,
+#cuboid form.ready {transform: translateZ(-20px) rotateX(90deg);}
+#cuboid form.loading {transform: translateZ(-20px) rotateX(180deg);}
+#cuboid form.complete {transform: translateZ(-20px) rotateX(270deg);}
+div#login {
+  padding: 2em;
+}
+div#login a {
+  font-weight: bold;
+  color: hsl(0, 0%, 80%);
+}
+a {
+  text-decoration: none;
+  color: hsl(225, 90%, 50%);
+}
+div.shiptoast {
+  list-style: none;
+  width: 90%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding-bottom: 1em;
+}
+div.shiptoaster {
+  list-style: none;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  flex: 0 1 120px;
+  font-size: smaller;
+  order: 1;
+}
+div.prof_pic {
+  flex: 1 0 100px;
+  order: 1;
+}
+div.prof_pic img {
+  width: 100px;
+  height: 100px;
+  float: left;
+}
+div.author {
+  flex: 1000 0 0;
+  order: 2;
+}
+div.content {
+  flex: 1 1 0;
+  order: 2;
+  padding: 0 5px;
+  text-align: left;
+}
+div.content a {
+  display: table;
+  margin: 0;
+}
+div.time {
+  float: right;
+  order: 3;
+  height: 100%;
+  font-size: smaller;
+  color: hsl(0, 0%, 80%);
+}
+.ccp {
+  color: hsl(225, 90%, 50%);
+}
+img {
+  max-height: 500px;
+  max-width: 500px;
+  display: block;
+  margin: 0;
+}
+iframe {
+  display: block;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+ <h1>Eve Online Ship Toasting</h1>
+ <div class="bg-toast"><i class="fa fa-glass"></i></div>
+ {%- if "character" in session %}
+ <div id="cuboid">
+  <form method="POST">
+   <div>
+    <p class="cuboid-text">Toast!</p>
+   </div>
+   <div>
+    <label for="submit" class="submit-icon"><i class="fa fa-beer"></i></label>
+    <input type="text" id="content" name="content" class="cuboid-text" placeholder="Give a toast..." title="...to a ship in Eve Online" autocomplete="off" required />
+    <input type="submit" id="submit" />
+   </div>
+   <div>
+    <p class="cuboid-text loader">Toasting...</p>
+   </div>
+   <div>
+    <span class="reset-icon"><i class="fa fa-refresh"></i></span>
+    <p class="cuboid-text">Toasted!</p>
+   </div>
+  </form>
+ </div>
+ {%- else %}
+ <div id="login"><a href="{{ url_for('login') }}">Login</a></div>
+ {%- endif %}
+ <div id="shiptoasts">
+  {%- for shiptoast in shiptoasts %}
+  <div class="shiptoast">
+   <div class="shiptoaster">
+    <div class="prof_pic"><img src="https://image.eveonline.com/Character/{{ shiptoast.author_id }}_256.jpg" height="256" width="256" alt="{{ shiptoast.author }}" /></div>
+    <div class="author{% if shiptoast.author.startswith('CCP ') %} ccp{% endif %}">{{ shiptoast.author }}</div>
+   </div>
+   <div class="content">{{ shiptoast.content|safe }}</div>
+   <div class="time">{{ shiptoast.time.strftime("%b %e, %H:%M:%S") }}</div>
+  </div>
+  {%- endfor %}
+ </div>
+ {%- if "character" in session %}
+ <div id="login"><a href="{{ url_for('logout') }}">Logout</a></div>
+ {%- endif %}
+</body>
+</html>

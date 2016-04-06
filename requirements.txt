@@ -1,0 +1,8 @@
+Flask
+Flask-Cache
+Flask-OAuthlib
+redis
+apscheduler
+gcloud
+gevent
+BeautifulSoup4
