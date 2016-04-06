@@ -35,7 +35,7 @@ app.secret_key = APP_SECRET
 
 
 # setup SSO
-SSO_SCOPE = os.environ.get("EVE_SSO_SCOPE", "publicData")
+SSO_SCOPE = os.environ.get("EVE_SSO_SCOPE") or None
 SSO_CALLBACK = os.environ.get("EVE_SSO_CALLBACK", "")
 SSO_CONFIG = os.environ.get("EVE_SSO_CONFIG")
 
