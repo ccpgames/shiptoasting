@@ -16,6 +16,7 @@ __version__ = "0.0.1"
 app = Flask(__name__)
 oauth = OAuth()
 evesso = oauth.remote_app("evesso", app_key="EVESSO")
+HEARTBEAT = "<!-- HEARTBEAT -->"
 
 
 # setup flask

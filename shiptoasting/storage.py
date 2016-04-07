@@ -12,9 +12,10 @@ from datetime import timezone
 from bs4 import BeautifulSoup
 from gcloud import datastore
 from gcloud import pubsub
-from oauth2client.client import GoogleCredentials
+from gcloud.exceptions import BadRequest
 
 from shiptoasting import app
+from shiptoasting import HEARTBEAT
 from shiptoasting.formatting import format_message
 from shiptoasting.kube import all_active_pods
 
@@ -43,8 +44,9 @@ def _add_shiptoast(client, shiptoast):
         client.put(entity)
         logging.info("uploaded shiptoast to google datastore")
         return True
-    except Exception as err:
-        logging.error("Error uploading %r to datastore: %r", dict(entity), err)
+    except BadRequest as err:
+        logging.error("Error uploading to datastore: %r", dict(entity))
+        logging.error(err)
         return False
 
 
@@ -58,17 +60,14 @@ class ShipToasts(object):
     """Singleton of shiptoasts for upload processing and retrieval/caching."""
 
     def __init__(self):
-        self.credentials = GoogleCredentials.get_application_default()
         self.name = os.uname()[1]
 
         self._client = datastore.Client(
             project=os.environ.get("GCLOUD_DATASET_ID"),
-            credentials=self.credentials,
         )
 
         self._pubsub_client = pubsub.Client(
             project=os.environ.get("GCLOUD_DATASET_ID"),
-            credentials=self.credentials,
         )
 
         self._topic = self._pubsub_client.topic("shiptoasts")
@@ -78,7 +77,6 @@ class ShipToasts(object):
         # make a new client for the push to not collide with the read socket
         self._push_topic = pubsub.Client(
             project=os.environ.get("GCLOUD_DATASET_ID"),
-            credentials=self.credentials,
         ).topic("shiptoasts")
 
         self._subs = []   # instances subscribed to changes
@@ -90,13 +88,16 @@ class ShipToasts(object):
 
         results = []
         datastore_query = self._client.query(kind=KIND, order=["time"])
-        for res in datastore_query.fetch(limit=VISIBLE_POSTS):
-            results.append(ShipToast(
-                res["author"],
-                res["author_id"],
-                format_message(res["content"]),
-                res["time"],
-            ))
+        try:
+            for res in datastore_query.fetch(limit=VISIBLE_POSTS):
+                results.append(ShipToast(
+                    res["author"],
+                    res["author_id"],
+                    format_message(res["content"]),
+                    res["time"],
+                ))
+        except BadRequest as error:
+            logging.warning(error)
 
         for res in _time_sorted(results):
             self._cache.append(res)
@@ -207,6 +208,7 @@ class ShipToaster(object):
     def iter(self):
         """Iterator of the most recent shiptoasts (blocking)."""
 
+        heartbeat = 0
         while True:
             sent = []
             for shiptoast in self.updates:
@@ -214,5 +216,10 @@ class ShipToaster(object):
                 yield shiptoast
             for shiptoast in sent:
                 self.updates.remove(shiptoast)
+
+            heartbeat += 1
+            if heartbeat > 14:
+                yield HEARTBEAT
+                heartbeat = 0
 
             time.sleep(1)
