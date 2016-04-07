@@ -15,6 +15,7 @@ from flask import session
 from apscheduler.schedulers.gevent import GeventScheduler
 
 from shiptoasting import app
+from shiptoasting import HEARTBEAT
 from shiptoasting import requires_logged_in
 from shiptoasting.storage import ShipToasts
 from shiptoasting.storage import ShipToaster
@@ -35,7 +36,7 @@ def index():
 def add_shiptoast():
     """Accepts the POST form, stores the content."""
 
-    post_content = request.form.get("content")
+    post_content = request.form.get("content").strip()
     if post_content:
         if len(post_content) > 500:
             post_content = "{}... and I've said too much.".format(
@@ -63,21 +64,24 @@ def streaming_shiptoasts():
     """Iterator to asyncly deliver shiptoasts."""
 
     for shiptoast in ShipToaster().iter():
-        data = (
-            '<div class="shiptoast">'
-            '<div class="shiptoaster">'
-            '<div class="prof_pic"><img '
-            'src="https://image.eveonline.com/Character/{author_id}_256.jpg" '
-            'height="256" width="256" alt="{author}" /></div>'
-            '<div class="author{ccp}">{author}</div>'
-            '</div>'
-            '<div class="content">{content}</div>'
-            '<div class="time">{time:%b %e, %H:%M:%S}</div>'
-            '</div>'
-        ).format(
-            ccp=" ccp" * int(shiptoast.author.startswith("CCP ")),
-            **shiptoast._asdict()
-        )
+        if shiptoast is HEARTBEAT:
+            data = HEARTBEAT
+        else:
+            data = (
+                '<div class="shiptoast">'
+                '<div class="shiptoaster">'
+                '<div class="prof_pic"><img src='
+                '"https://image.eveonline.com/Character/{author_id}_256.jpg" '
+                'height="256" width="256" alt="{author}" /></div>'
+                '<div class="author{ccp}">{author}</div>'
+                '</div>'
+                '<div class="content">{content}</div>'
+                '<div class="time">{time:%b %e, %H:%M:%S}</div>'
+                '</div>'
+            ).format(
+                ccp=" ccp" * int(shiptoast.author.startswith("CCP ")),
+                **shiptoast._asdict()
+            )
         yield "data: {}\n\n".format(data)
 
     raise StopIteration
