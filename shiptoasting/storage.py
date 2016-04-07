@@ -185,6 +185,10 @@ class ShipToasts(object):
         # NB: ideally the app would clean its own on exit. however, I could
         #     not do anything with gevent.signal, atexit, or signal directly.
         active_pods = all_active_pods()
+
+        if active_pods is None:
+            return  # running in dev, try not to destroy prod
+
         for sub in self._topic.list_subscriptions()[0]:
             if sub.name not in active_pods:
                 sub.delete()

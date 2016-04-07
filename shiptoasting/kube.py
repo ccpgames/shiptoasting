@@ -14,7 +14,10 @@ class KubeAPI(object):
     """Stores the automatically injected kube API token."""
 
     def __init__(self):
-        self.base_url = KubeAPI._api_version()
+        try:
+            self.base_url = KubeAPI._api_version()
+        except FileNotFoundError:
+            self.base_url = None
 
     @staticmethod
     def _api_version():
@@ -60,10 +63,18 @@ class KubeAPI(object):
 
 
 def all_active_pods():
-    """Returns a list of the active shiptoasting pods."""
+    """Find the other active shiptoasting pods.
+
+    Returns:
+        a list of running pods, or None if the KubeAPI is not available.
+    """
+
+    kube_api = KubeAPI()
+    if kube_api.base_url is None:
+        return None
 
     active_pods = []
-    for pod in KubeAPI().get("pods")["items"]:
+    for pod in kube_api.get("pods")["items"]:
         if pod["metadata"].get("labels", {}).get("name") == "shiptoasting":
             active_pods.append(pod["metadata"]["name"])
     return active_pods
