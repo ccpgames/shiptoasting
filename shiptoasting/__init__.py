@@ -24,7 +24,7 @@ APP_SECRET = os.environ.get("FLASK_APP_SECRET_KEY")
 
 
 if not APP_SECRET:
-    raise RuntimeError("FLASK_SECRET is required!")
+    raise RuntimeError("FLASK_APP_SECRET_KEY is required!")
 
 
 if os.path.isfile(APP_SECRET):
