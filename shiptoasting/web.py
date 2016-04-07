@@ -6,6 +6,7 @@ import sys
 import atexit
 import traceback
 
+import gevent
 from flask import Response
 from flask import redirect
 from flask import render_template
@@ -25,7 +26,7 @@ def index():
 
     return render_template(
         "index.html",
-        shiptoasts=ShipToasts.get_shiptoasts(),
+        shiptoasts=app.shiptoasts.get_shiptoasts(),
     )
 
 
@@ -42,7 +43,7 @@ def add_shiptoast():
             )
 
         # TODO: add rate limiting
-        ShipToasts.add_shiptoast(
+        app.shiptoasts.add_shiptoast(
             post_content,
             session["character"]["CharacterName"],
             session["character"]["CharacterID"],
@@ -102,11 +103,18 @@ def production(*_, **settings):
     """Hooks exceptions and returns the Flask app."""
 
     hook_exceptions()
-    ShipToasts.initial_fill()
+
+    app.shiptoasts = ShipToasts()
+    app.shiptoasts.initial_fill()
+    app.shiptoasts.remove_subscriptions()
+
     scheduler = GeventScheduler()
-    scheduler.add_job(ShipToasts.periodic_fill, "interval", seconds=30)
-    greenlet = scheduler.start()
-    atexit.register(greenlet.join)
+    scheduler.add_job(app.shiptoasts.periodic_delete, "interval", seconds=30)
+    cleaner = scheduler.start()
+    listener = gevent.Greenlet.spawn(app.shiptoasts.listen_for_updates)
+
+    atexit.register(cleaner.join, timeout=2)
+    atexit.register(listener.join, timeout=2)
     atexit.register(scheduler.shutdown)
 
     return app

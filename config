@@ -16,3 +16,4 @@ errorlog = "-"
 loglevel = "warn"
 accesslog = "-"
 proc_name = None
+max_requests = 1000

@@ -6,3 +6,4 @@ apscheduler
 gcloud
 gevent
 BeautifulSoup4
+PyYAML

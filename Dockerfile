@@ -18,7 +18,7 @@ VOLUME /app
 WORKDIR /app
 
 RUN addgroup -S shiptoasting \
-&& adduser -S -H -G shiptoasting -h /app -s /usr/sbin/nologin -D shiptoasting \
+&& adduser -S -H -G shiptoasting -h /tmp -s /usr/sbin/nologin -D shiptoasting \
 && apk del patch gcc git musl-dev linux-headers
 
 USER shiptoasting
