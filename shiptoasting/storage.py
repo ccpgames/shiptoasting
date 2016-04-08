@@ -2,6 +2,7 @@
 
 
 import os
+import html
 import time
 import yaml
 import logging
@@ -9,6 +10,7 @@ import datetime
 from collections import namedtuple
 
 from bs4 import BeautifulSoup
+from flask import abort
 from gcloud import datastore
 from gcloud import pubsub
 from gcloud.exceptions import BadRequest
@@ -30,11 +32,14 @@ def _clean_content(message):
     """Cleans the message to remove any html tags from it."""
 
     try:
-        return " ".join(BeautifulSoup(message, "html.parser").stripped_strings)
+        return html.escape(" ".join(BeautifulSoup(
+            message,
+            "html.parser",
+        ).stripped_strings))
     except Exception as error:
         logging.warning("couldn't use bs4 to parse the content for strings")
         logging.warning(error)
-        return message
+        abort(400)
 
 
 def _add_shiptoast(client, shiptoast):
