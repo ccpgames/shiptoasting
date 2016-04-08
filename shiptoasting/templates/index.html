@@ -9,17 +9,15 @@
  function complete() {
   $("#cuboid form").removeClass("loading").addClass("complete");
  }
- $("#content").focus(function() {
-  $("#cuboid form").addClass("ready");
- })
- $("#content").blur(function() {
-  if($(this).val() == "") {
-   $("#cuboid form").removeClass("ready");
+ $(document).bind("keypress keydown keyup", function(e) {
+  if (e.which === 8 | 0) {  // if the keydown is backspace, len must be greater than 1 to stay visible
+   var has_content = $("#content").val().length > 1;
+  } else {  // this keypress is the first character, or we've already typed stuff
+   var has_content = $("#content").is(":focus") || $("#content").val().length > 0;
   }
- })
- $("#content").keyup(function() {
-  $(".submit-icon").toggleClass("active", $(this).val().length > 0);
- })
+  $("#cuboid form").toggleClass("ready", has_content);
+  $(".submit-icon").toggleClass("active", has_content);
+ });
  $("#cuboid form").submit(function() {
   $(this).removeClass("ready").addClass("loading");
   setTimeout(complete, 60000);
@@ -122,7 +120,7 @@ h1 {
   cursor: pointer;
 }
 .submit-icon.active {
-  color: hsl(0, 0%, 30%);
+  color: rgba(0, 0, 0, 0.75);
 }
 .reset-icon {
   color: rgba(255, 255, 255, 0.25);
@@ -226,14 +224,14 @@ iframe {
  <div class="bg-toast"><i class="fa fa-glass"></i></div>
  {%- if "character" in session %}
  <div id="cuboid">
-  <form method="POST">
+  <form method="POST" novalidate>
    <div>
     <p class="cuboid-text">Toast!</p>
    </div>
    <div>
     <label for="submit" class="submit-icon"><i class="fa fa-beer"></i></label>
-    <input type="text" id="content" name="content" class="cuboid-text" placeholder="Give a toast..." title="...to a ship in EVE Online" autocomplete="off" required />
-    <input type="submit" id="submit" />
+    <input type="text" id="content" name="content" class="cuboid-text" placeholder="Give a toast..." title="...to a ship in EVE Online" autocomplete="off" tabindex="1" required autofocus/>
+    <input type="submit" id="submit" tabindex="2" />
    </div>
    <div>
     <p class="cuboid-text loader">Toasting...</p>
