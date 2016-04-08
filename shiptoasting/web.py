@@ -72,7 +72,7 @@ def add_shiptoast():
 def shiptoasts():
     """Returns the shiptoasts stream object."""
 
-    last_seen_id = request.args.get("last_seen")
+    last_seen_id = request.args.get("last_seen", "None")
     if last_seen_id == "None":
         last_seen_id = None
     else:

@@ -318,12 +318,12 @@ class ShipToasts(object):
 
         return self._cache
 
-    def add_subscriber(self, poster):
+    def add_sub(self, poster):
         """Adds a subscriber for updates."""
 
         self._subs.append(poster)
 
-    def remove_subscriber(self, poster):
+    def remove_sub(self, poster):
         """Removes a subscriber from updates."""
 
         self._subs.remove(poster)
@@ -334,21 +334,22 @@ class ShipToaster(object):
 
     def __init__(self, last_seen_id):
 
-        seen_index = None
-        for i, cached in enumerate(app.shiptoasts._cache):
+        # add ourself to subscribers at the same time as checking the cache
+        cache, _ = list(app.shiptoasts._cache), app.shiptoasts.add_sub(self)
+
+        seen_index = 0
+        for i, cached in enumerate(cache):
             if cached.id == last_seen_id:
                 seen_index = i
                 break
 
-        if seen_index is None:
-            self.updates = []
-        else:
-            self.updates = app.shiptoasts._cache[:seen_index]
+        self.updates = cache[:seen_index]
 
-        app.shiptoasts.add_subscriber(self)
+        del cache
+        del _
 
     def __del__(self):
-        app.shiptoasts.remove_subscriber(self)
+        app.shiptoasts.remove_sub(self)
 
     def notify(self, shiptoast):
         """Notify method to receive cached events."""

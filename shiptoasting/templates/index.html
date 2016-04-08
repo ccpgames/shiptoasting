@@ -27,11 +27,22 @@
  $(".reset-icon").click(function() {
   $("#cuboid form").removeClass("complete");
  })
+ if (("Notification" in window)) {
+  Notification.requestPermission(function(result) {
+   console.log(result);
+  });
+ }
  var shiptoasts = new EventSource("/shiptoasts?last_seen={{ last_seen }}");
  shiptoasts.onmessage = function(event) {
   if (event.data != "<!-- HEARTBEAT -->") {
-    var updated_html = event.data + document.getElementById("shiptoasts").innerHTML;
-    document.getElementById("shiptoasts").innerHTML = updated_html;
+   var updated_html = event.data + document.getElementById("shiptoasts").innerHTML;
+   document.getElementById("shiptoasts").innerHTML = updated_html;
+   if (!("Notification" in window)) {
+    console.log("This browser does not support desktop notifications");
+   } else if (Notification.permission === "granted") {
+    var options = {body: "new shiptoast!"};
+    var notification = new Notification("shiptoasting", options);
+   }
   }
  }
 </script>
