@@ -92,7 +92,7 @@ def streaming_shiptoasts(last_seen_id):
             data = HEARTBEAT
         else:
             data = (
-                '{id} '
+                '{id}%{author}%'
                 '<div class="shiptoast">'
                 '<div class="shiptoaster">'
                 '<div class="prof_pic"><img src='

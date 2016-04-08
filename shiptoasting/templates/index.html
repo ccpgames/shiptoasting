@@ -33,13 +33,14 @@
  var last_seen = "{{ last_seen }}";
  var shiptoasts = new EventSource("/shiptoasts?last_seen=" + last_seen);
  shiptoasts.onmessage = function(event) {
-  if (event.data != "<!-- HEARTBEAT -->" && event.data.substr(0, event.data.indexOf(" ")) != last_seen) {
-   var updated_html = event.data.substr(event.data.indexOf(" ") + 1) + document.getElementById("shiptoasts").innerHTML;
+  message_split = event.data.split("%");
+  if (event.data != "<!-- HEARTBEAT -->" && message_split[0] != last_seen) {
+   var updated_html = message_split.slice(2).join("%") + document.getElementById("shiptoasts").innerHTML;
    document.getElementById("shiptoasts").innerHTML = updated_html;
    if (!("Notification" in window)) {
     console.log("This browser does not support desktop notifications");
    } else if (Notification.permission === "granted") {
-    var options = {body: "new shiptoast!"};
+    var options = {body: "New shiptoast by " + message_split[1] + "!"};
     var notification = new Notification("shiptoasting", options);
    }
   }
@@ -215,6 +216,10 @@ img {
   margin: 0;
 }
 iframe {
+  display: block;
+  margin: 0;
+}
+video {
   display: block;
   margin: 0;
 }
