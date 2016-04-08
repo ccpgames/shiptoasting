@@ -27,10 +27,12 @@
  $(".reset-icon").click(function() {
   $("#cuboid form").removeClass("complete");
  })
- var shiptoasts = new EventSource("/shiptoasts");
+ var shiptoasts = new EventSource("/shiptoasts?last_seen={{ last_seen }}");
  shiptoasts.onmessage = function(event) {
-  var updated_html = event.data + document.getElementById("shiptoasts").innerHTML;
-  document.getElementById("shiptoasts").innerHTML = updated_html;
+  if (event.data != "<!-- HEARTBEAT -->") {
+    var updated_html = event.data + document.getElementById("shiptoasts").innerHTML;
+    document.getElementById("shiptoasts").innerHTML = updated_html;
+  }
  }
 </script>
 <style>
@@ -209,7 +211,7 @@ iframe {
 </style>
 </head>
 <body>
- <h1>Eve Online Ship Toasting</h1>
+ <h1>EVE Online Ship Toasting</h1>
  <div class="bg-toast"><i class="fa fa-glass"></i></div>
  {%- if "character" in session %}
  <div id="cuboid">
@@ -219,7 +221,7 @@ iframe {
    </div>
    <div>
     <label for="submit" class="submit-icon"><i class="fa fa-beer"></i></label>
-    <input type="text" id="content" name="content" class="cuboid-text" placeholder="Give a toast..." title="...to a ship in Eve Online" autocomplete="off" required />
+    <input type="text" id="content" name="content" class="cuboid-text" placeholder="Give a toast..." title="...to a ship in EVE Online" autocomplete="off" required />
     <input type="submit" id="submit" />
    </div>
    <div>

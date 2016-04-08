@@ -4,6 +4,7 @@
 import os
 import sys
 import atexit
+import random
 import traceback
 
 import gevent
@@ -25,9 +26,11 @@ from shiptoasting.storage import ShipToaster
 def index():
     """Main index. Displays most recent then streams."""
 
+    shiptoasts = app.shiptoasts.get_shiptoasts()
     return render_template(
         "index.html",
-        shiptoasts=app.shiptoasts.get_shiptoasts(),
+        shiptoasts=shiptoasts,
+        last_seen=shiptoasts[0].id if shiptoasts else None,
     )
 
 
@@ -43,12 +46,24 @@ def add_shiptoast():
                 post_content[:500]
             )
 
-        # TODO: add rate limiting
-        app.shiptoasts.add_shiptoast(
+        posted_authors = app.shiptoasts.add_shiptoast(
             post_content,
             session["character"]["CharacterName"],
             session["character"]["CharacterID"],
         )
+
+        if session["character"]["CharacterID"] not in posted_authors:
+            # spam filtered, time to calm the fuck down
+            enhance_your_calm_videos = [
+                "eCidRemUTKo",
+                "tYg6nP7yRRk",
+                "txQ6t4yPIM0",
+                "EYi5aW1GdUU",
+                "d-diB65scQU",
+            ]
+            return redirect("https://www.youtube.com/watch?v={}".format(
+                random.choice(enhance_your_calm_videos)
+            ))
 
     return redirect("/")
 
@@ -57,13 +72,22 @@ def add_shiptoast():
 def shiptoasts():
     """Returns the shiptoasts stream object."""
 
-    return Response(streaming_shiptoasts(), mimetype="text/event-stream")
+    last_seen_id = request.args.get("last_seen")
+    if last_seen_id == "None":
+        last_seen_id = None
+    else:
+        last_seen_id = int(last_seen_id)
+
+    return Response(
+        streaming_shiptoasts(last_seen_id),
+        mimetype="text/event-stream",
+    )
 
 
-def streaming_shiptoasts():
+def streaming_shiptoasts(last_seen_id):
     """Iterator to asyncly deliver shiptoasts."""
 
-    for shiptoast in ShipToaster().iter():
+    for shiptoast in ShipToaster(last_seen_id).iter():
         if shiptoast is HEARTBEAT:
             data = HEARTBEAT
         else:
@@ -110,10 +134,9 @@ def production(*_, **settings):
 
     app.shiptoasts = ShipToasts()
     app.shiptoasts.initial_fill()
-    app.shiptoasts.remove_subscriptions()
 
     scheduler = GeventScheduler()
-    scheduler.add_job(app.shiptoasts.periodic_delete, "interval", seconds=30)
+    scheduler.add_job(app.shiptoasts.periodic_call, "interval", seconds=30)
     cleaner = scheduler.start()
     listener = gevent.Greenlet.spawn(app.shiptoasts.listen_for_updates)
 
