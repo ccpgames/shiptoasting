@@ -30,10 +30,11 @@
    console.log(result);
   });
  }
- var shiptoasts = new EventSource("/shiptoasts?last_seen={{ last_seen }}");
+ var last_seen = "{{ last_seen }}";
+ var shiptoasts = new EventSource("/shiptoasts?last_seen=" + last_seen);
  shiptoasts.onmessage = function(event) {
-  if (event.data != "<!-- HEARTBEAT -->") {
-   var updated_html = event.data + document.getElementById("shiptoasts").innerHTML;
+  if (event.data != "<!-- HEARTBEAT -->" && event.data.substr(0, event.data.indexOf(" ")) != last_seen) {
+   var updated_html = event.data.substr(event.data.indexOf(" ") + 1) + document.getElementById("shiptoasts").innerHTML;
    document.getElementById("shiptoasts").innerHTML = updated_html;
    if (!("Notification" in window)) {
     console.log("This browser does not support desktop notifications");
