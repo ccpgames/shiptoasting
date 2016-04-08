@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 from gcloud import datastore
 from gcloud import pubsub
 from gcloud.exceptions import BadRequest
+from gcloud.exceptions import NotFound
 
 from shiptoasting import app
 from shiptoasting import HEARTBEAT
@@ -191,7 +192,10 @@ class ShipToasts(object):
 
         for sub in self._topic.list_subscriptions()[0]:
             if sub.name not in active_pods:
-                sub.delete()
+                try:
+                    sub.delete()
+                except NotFound:
+                    pass  # race condition, deleted already by another pod
 
 
 class ShipToaster(object):
