@@ -23,6 +23,7 @@ from shiptoasting.kube import all_active_pods
 
 
 VISIBLE_POSTS = int(os.environ.get("SHIPTOASTS_VISIBLE_MAX", 50))
+SPAM_ALLOWED = bool(int(os.environ.get("SPAM_IS_ALLOWED", 0)))
 KIND = os.environ.get("DATASTORE_KIND", "shiptoast")
 ShipToast = namedtuple("ShipToast",
                        ("author", "author_id", "content", "time", "id"))
@@ -42,24 +43,6 @@ def _clean_content(message):
         abort(400)
 
 
-def _add_shiptoast(client, shiptoast):
-    """Adds a shiptoast to the google datastore."""
-
-    entity = datastore.Entity(client.key(KIND))
-    entity["author"] = shiptoast.author
-    entity["author_id"] = shiptoast.author_id
-    entity["content"] = shiptoast.content
-    entity["time"] = shiptoast.time
-
-    try:
-        client.put(entity)
-    except BadRequest as err:
-        logging.error("Error uploading to datastore: %r", dict(entity))
-        logging.error(err)
-    else:
-        return entity.key.id
-
-
 def _time_sorted(shiptoast_list):
     """Sorts a list of shiptoasts by time posted."""
 
@@ -71,6 +54,9 @@ class ShipToastCache(list):
 
     def is_spam(self, shiptoast):
         """Returns a boolean of if the post is considered spam."""
+
+        if SPAM_ALLOWED:
+            return False
 
         # can't compare offset-naive and offset-aware datetimes
         # this error is the worst. completely avoidable, maybe worth a warning
@@ -117,18 +103,19 @@ class ShipToasts(object):
     def __init__(self):
         self.name = os.uname()[1]
 
-        self._client = datastore.Client(
-            project=os.environ.get("GCLOUD_DATASET_ID"),
-        )
+        project = os.environ.get("GCLOUD_DATASET_ID")
+        if project == "None":
+            project = None
+
+        if project:
+            self._client = datastore.Client(project=project)
+        else:
+            self._counter = 0
 
         self._pods = []
 
         if self._update_active_pods() is not None:
-
-            self._pubsub_client = pubsub.Client(
-                project=os.environ.get("GCLOUD_DATASET_ID"),
-            )
-
+            self._pubsub_client = pubsub.Client(project=project)
             self._topic = self._pubsub_client.topic(self.name)
             if not self._topic.exists():
                 self._topic.create()
@@ -141,6 +128,9 @@ class ShipToasts(object):
 
     def initial_fill(self, update_pods=True):
         """Query the datastore for all shiptoasts, sort and cache them."""
+
+        if not hasattr(self, "_client"):
+            return  # running w/o datastore backend
 
         results = []
         datastore_query = self._client.query(kind=KIND, order=["time"])
@@ -255,6 +245,31 @@ class ShipToasts(object):
                     self._update_subs(shiptoast)
                 sub.acknowledge(message_id)
 
+    def _add_shiptoast(self, shiptoast):
+        """Adds a shiptoast to the google datastore.
+
+        Returns:
+            the ID from saving to datastore, or self._counter + 1
+        """
+
+        if hasattr(self, "_client"):
+            entity = datastore.Entity(self._client.key(KIND))
+            entity["author"] = shiptoast.author
+            entity["author_id"] = shiptoast.author_id
+            entity["content"] = shiptoast.content
+            entity["time"] = shiptoast.time
+
+            try:
+                self._client.put(entity)
+            except BadRequest as err:
+                logging.error("Error uploading to datastore: %r", dict(entity))
+                logging.error(err)
+            else:
+                return entity.key.id
+        else:
+            self._counter += 1
+            return self._counter
+
     def _save_pending(self):
         """Tries to save all posts in the queue, requeues failures.
 
@@ -265,15 +280,15 @@ class ShipToasts(object):
         posted_authors = []
         current, self._queue = self._queue, []
         for shiptoast in current:
-            message_id = _add_shiptoast(self._client, shiptoast)
-            if message_id:
+            _id = self._add_shiptoast(shiptoast)
+            if _id:
                 # create the formatted message for our cache
                 formatted = ShipToast(
                     shiptoast.author,
                     shiptoast.author_id,
                     format_message(shiptoast.content),
                     shiptoast.time,
-                    message_id,
+                    _id,
                 )
 
                 # notify ourself clients immediately
@@ -282,7 +297,7 @@ class ShipToasts(object):
 
                 # publish to notify running nodes
                 unformatted = shiptoast._asdict()
-                unformatted["id"] = message_id
+                unformatted["id"] = _id
                 as_yaml = bytes(yaml.dump(unformatted), encoding="utf-8")
                 for topic in self.get_all_topics():
                     if topic.name in self._pods and topic.name != self.name:
@@ -310,6 +325,10 @@ class ShipToasts(object):
         """Adds a shiptoast to the cache, datastore and pubsub."""
 
         content = _clean_content(content)
+        if not content:
+            # nothing after cleaning. they should also calm the fuck down
+            return []
+
         now = datetime.datetime.now(tz=datetime.timezone.utc)
 
         # add to the save queue

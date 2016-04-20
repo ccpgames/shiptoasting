@@ -7,6 +7,7 @@ import re
 url_pattern = re.compile(
     "((https?):((//)|(\\\\))+([\w\d:#@%/;$()~_?\+-=\\\.&](#!)?)*)"
 )
+gfycat_pattern = re.compile("(https?)://gfycat.com/[^/]*")
 
 
 def _youtube_embed(youtube_link):
@@ -22,25 +23,41 @@ def _youtube_embed(youtube_link):
 def _gifv_embed(gifv_link):
     """Returns a video link to imgur for the gifv."""
 
-    img_id = gifv_link.split(".")[-2].split("/")[-1]
-    return """
-<video poster="https://i.imgur.com/{id}h.jpg" preload="auto" autoplay="autoplay" muted="muted" loop="loop" width="500" height="370">
-<source src="https://i.imgur.com/{id}.mp4" type="video/mp4">
-<object type="application/x-shockwave-flash" height="370" width="500" data="https://s.imgur.com/include/flash/gifplayer.swf?imgur_video=https://i.imgur.com/{id}.mp4&imgur_width=500&imgur_height=370">
-<param name="movie" value="https://s.imgur.com/include/flash/gifplayer.swf?imgur_video=https://i.imgur.com/{id}.mp4&imgur_width=500&imgur_height=370" />
-<param name="allowscriptaccess" value="never" />
-<param name="flashvars" value="height=370&amp;width=500" />
-<param name="width" value="500" />
-<param name="height" value="370" />
-<param name="version" value="0" />
-<param name="scale" value="scale" />
-<param name="salign" value="tl" />
-<param name="wmode" value="opaque" />
-</object>
-</video>
-""".format(
-    id=img_id
-)  # noqa
+    return (
+        '<video poster="https://i.imgur.com/{id}h.jpg" preload="auto" '
+        'autoplay="autoplay" muted="muted" loop="loop" '
+        'width="500" height="300">'
+        '<source src="https://i.imgur.com/{id}.mp4" type="video/mp4">'
+        '<object type="application/x-shockwave-flash" height="300" width="500"'
+        ' data="https://s.imgur.com/include/flash/gifplayer.swf?imgur_video='
+        'https://i.imgur.com/{id}.mp4&imgur_width=500&imgur_height=300">'
+        '<param name="movie" value="https://s.imgur.com/include/flash/'
+        'gifplayer.swf?imgur_video=https://i.imgur.com/{id}.mp4&'
+        'imgur_width=500&imgur_height=300" />'
+        '<param name="allowscriptaccess" value="never" />'
+        '<param name="flashvars" value="height=300&amp;width=500" />'
+        '<param name="width" value="500" />'
+        '<param name="height" value="300" />'
+        '<param name="version" value="0" />'
+        '<param name="scale" value="scale" />'
+        '<param name="salign" value="tl" />'
+        '<param name="wmode" value="opaque" />'
+        '</object>'
+        '</video>'
+    ).format(
+        id=gifv_link.split(".")[-2].split("/")[-1]
+    )
+
+
+def _gfycat_embed(gfycat_link):
+    return (
+        '<video poster="https://thumbs.gfycat.com/{id}-poster.jpg" autoplay '
+        'muted loop width="500" height="300">'
+        '<source src="https://giant.gfycat.com/{id}.mp4" type="video/mp4">'
+        '</video>'
+    ).format(
+        id=gfycat_link.split("/")[-1]
+    )
 
 
 def format_message(message):
@@ -54,7 +71,10 @@ def format_message(message):
         formatted.append(message[last_match:span[0]])
         link = message[span[0]:span[1]]
         link_extension = link.split(".")[-1]
-        if "youtube.com/watch?v=" in link:
+        gfycat_match = re.match(gfycat_pattern, link)
+        if gfycat_match:
+            formatted.append(_gfycat_embed(link[:gfycat_match.end()]))
+        elif "youtube.com/watch?v=" in link:
             formatted.append(_youtube_embed(
                 link.split("youtube.com/watch?v=")[-1].split("&")[0]
             ))

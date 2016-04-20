@@ -10,11 +10,12 @@
   $("#cuboid form").removeClass("loading").addClass("complete");
  }
  $(document).bind("keypress keydown keyup", function(e) {
-  if (e.which === 8 | 0) {  // if the keydown is backspace, len must be greater than 1 to stay visible
-   var has_content = $("#content").val().length > 1;
-  } else {  // this keypress is the first character, or we've already typed stuff
-   var has_content = $("#content").is(":focus") || $("#content").val().length > 0;
+  var content_input_form = $("#content");
+  if (content_input_form.size == 0) { return };  // not logged in
+  if (e.type == "keydown" && !$("#content").is(":focus") && (!e.metaKey || e.key == "v")) {
+    $("#content").focus();
   }
+  var has_content = content_input_form.val().length > 0;
   $("#cuboid form").toggleClass("ready", has_content);
   $(".submit-icon").toggleClass("active", has_content);
  });
@@ -105,7 +106,7 @@ h1 {
   color: hsl(0, 0%, 30%);
   display: block;
   width: 100%;
-  padding: 0 10px;
+  padding: 0 1.75em 0 10px;
   box-sizing: border-box;
 }
 #submit {
@@ -189,12 +190,14 @@ div.content {
   order: 2;
   padding: 0 5px;
   text-align: left;
-  top: -5px;
   position: relative;
+  max-width: 500px;
+  word-wrap: break-word;
 }
 div.content a {
   display: table;
   margin: 0;
+  word-wrap: break-word;
 }
 div.time {
   float: right;
@@ -204,7 +207,6 @@ div.time {
   color: hsl(0, 0%, 80%);
   position: relative;
   right: -5px;
-  top: -5px;
 }
 .ccp {
   color: hsl(225, 90%, 50%);
@@ -235,7 +237,7 @@ video {
     <p class="cuboid-text">Toast!</p>
    </div>
    <div>
-    <label for="submit" class="submit-icon"><i class="fa fa-beer"></i></label>
+    <label for="submit" class="submit-icon" title="Cheers!"><i class="fa fa-beer"></i></label>
     <input type="text" id="content" name="content" class="cuboid-text" placeholder="Give a toast..." title="...to a ship in EVE Online" autocomplete="off" tabindex="1" required autofocus/>
     <input type="submit" id="submit" tabindex="2" />
    </div>
