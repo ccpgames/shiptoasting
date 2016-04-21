@@ -1,0 +1,8 @@
+{
+    "consumer_key": "you can make your own developer key at:",
+    "consumer_secret": "https://developers.eveonline.com",
+    "base_url": "https://login.eveonline.com/oauth/",
+    "access_token_url": "https://login.eveonline.com/oauth/token",
+    "access_token_method": "POST",
+    "authorize_url": "https://login.eveonline.com/oauth/authorize"
+}
