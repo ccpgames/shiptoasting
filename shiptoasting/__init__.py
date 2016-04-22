@@ -47,12 +47,11 @@ elif not SSO_CALLBACK:
     raise RuntimeError("EVE_SSO_CALLBACK is required!")
 
 
-if os.path.isfile(SSO_CONFIG):
-    try:
-        with open(SSO_CONFIG, "r") as openconfig:
-            app.config["EVESSO"] = json.load(openconfig)
-    except Exception as error:
-        raise RuntimeError("Could not read SSO CONFIG! %r", error)
+try:
+    with open(SSO_CONFIG, "r") as openconfig:
+        app.config["EVESSO"] = json.load(openconfig)
+except Exception as error:
+    raise RuntimeError("Could not read SSO CONFIG! {!r}".format(error))
 
 
 oauth.init_app(app)

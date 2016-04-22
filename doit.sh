@@ -14,6 +14,7 @@ random_string 256
 kubectl create secret generic shiptoasting-flask-app --from-literal=secret=$(random_string 512)
 kubectl create secret generic ccp-favicon --from-file=favicon.ico
 kubectl create secret generic tech-ccp-is-certs --from-file=$(pwd)/ssl
+kubectl get secrets
 kubectl cluster-info
 kubectl config view | grep -A4 $(kubectl config current-context) | grep password | cut -d ':' -f2 | sed 's/^ *//' | pbcopy
 echo "done"
