@@ -36,8 +36,10 @@
  shiptoasts.onmessage = function(event) {
   message_split = event.data.split("%");
   if (event.data != "<!-- HEARTBEAT -->" && message_split[0] != last_seen) {
-   var updated_html = message_split.slice(2).join("%") + document.getElementById("shiptoasts").innerHTML;
-   document.getElementById("shiptoasts").innerHTML = updated_html;
+   var newShiptoast=document.createElement("div");
+   newShiptoast.className="shiptoast";
+   newShiptoast.innerHTML=message_split.slice(2).join("%");
+   document.getElementById("shiptoasts").insertBefore(newShiptoast,document.getElementById("shiptoasts").firstChild);
    if (!("Notification" in window)) {
     console.log("This browser does not support desktop notifications");
    } else if (Notification.permission === "granted") {
