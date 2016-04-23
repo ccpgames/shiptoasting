@@ -93,7 +93,6 @@ def streaming_shiptoasts(last_seen_id):
         else:
             data = (
                 '{id}%{author}%'
-                '<div class="shiptoast">'
                 '<div class="shiptoaster">'
                 '<div class="prof_pic"><img src='
                 '"https://image.eveonline.com/Character/{author_id}_256.jpg" '
@@ -102,7 +101,6 @@ def streaming_shiptoasts(last_seen_id):
                 '</div>'
                 '<div class="content">{content}</div>'
                 '<div class="time">{time:%b %e, %H:%M:%S}</div>'
-                '</div>'
             ).format(
                 ccp=" ccp" * int(shiptoast.author.startswith("CCP ")),
                 **shiptoast._asdict()
