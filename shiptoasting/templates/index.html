@@ -37,9 +37,10 @@
   message_split = event.data.split("%");
   if (event.data != "<!-- HEARTBEAT -->" && message_split[0] != last_seen) {
    var newShiptoast=document.createElement("div");
+   var shiptoasts=document.getElementById("shiptoasts");
    newShiptoast.className="shiptoast";
    newShiptoast.innerHTML=message_split.slice(2).join("%");
-   document.getElementById("shiptoasts").insertBefore(newShiptoast,document.getElementById("shiptoasts").firstChild);
+   shiptoasts.insertBefore(newShiptoast,shiptoasts.firstChild);
    if (!("Notification" in window)) {
     console.log("This browser does not support desktop notifications");
    } else if (Notification.permission === "granted") {
