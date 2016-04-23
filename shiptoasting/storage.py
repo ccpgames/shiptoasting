@@ -133,7 +133,7 @@ class ShipToasts(object):
             return  # running w/o datastore backend
 
         results = []
-        datastore_query = self._client.query(kind=KIND, order=["time"])
+        datastore_query = self._client.query(kind=KIND, order=["-time"])
         try:
             for res in datastore_query.fetch(limit=VISIBLE_POSTS):
                 results.append(ShipToast(
