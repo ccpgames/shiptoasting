@@ -7,7 +7,7 @@ cat sso-config.json | grep -v secret
 kubectl create secret generic shiptoasting-sso-secret --from-file=sso-config.json
 kubectl get secrets
 kubectl get secret shiptoasting-sso-secret -o yaml | grep sso-config.json | cut -d ':' -f2 | sed 's/^ *//' | base64 -D | grep -v secret
-kubectl create configmap shiptoasting-nginx-config --from-file=$(pwd)/nginx
+kubectl create configmap shiptoasting-nginx-config --from-file=$(pwd)/nginx.conf
 kubectl get configmap
 kubectl get configmap shiptoasting-nginx-config -o yaml
 random_string 256
