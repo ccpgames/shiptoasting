@@ -25,6 +25,8 @@ spec:
           mountPath: /ssl
         - name: nginx-config
           mountPath: /etc/nginx/conf.d
+        - name: ccp-favicon
+          mountPath: /ccp
         ports:
         - name: http
           containerPort: 80
@@ -42,8 +44,6 @@ spec:
           mountPath: /sso
         - name: shiptoasting-flask-app
           mountPath: /flask
-        - name: ccp-favicon
-          mountPath: /ccp
         env:
         - name: GCLOUD_DATASET_ID
           value: eve-tech
