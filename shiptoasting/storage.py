@@ -319,7 +319,7 @@ class ShipToasts(object):
                 to_remove.append(sub)
 
         for sub in to_remove:
-            self.remove_subscriber(sub)
+            self.remove_sub(sub)
 
     def add_shiptoast(self, content, author, author_id):
         """Adds a shiptoast to the cache, datastore and pubsub."""
